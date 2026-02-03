@@ -1,0 +1,106 @@
+experiment_name: t2i_vtp_fm_256_anime_buckets_test
+output_dir: runs
+seed: 42
+
+video:
+  # * These are the default sampling dimensions during training.
+  # * Bucketing uses the `bucketing.buckets` list below.
+  width: 256
+  height: 256
+  fps: 16
+  num_frames: 1
+  frame_stride: 1
+
+bucketing:
+  enabled: true
+  strategy: closest_ar
+  # * Bucket sizes must be divisible by tokenizer.latent_f (default 16).
+  buckets:
+    - [256, 256]
+
+tokenizer:
+  type: vtp
+  name_or_path: ./VTP-Large-f16d64
+  repo_path: ./VTP
+  latent_f: 16
+  latent_d: 64
+  latent_scale: 6.47
+
+text_encoder:
+  type: hf
+  # * NOTE: this model is gated; you must accept the license on HF and have a token available.
+  name_or_path: ./t5gemma-2-270m-270m
+  max_length: 128
+  freeze: true
+  use_processor: true
+  trust_remote_code: false
+
+model:
+  dim: 512
+  depth: 8
+  num_heads: 8
+  window_size: 8
+  mlp_ratio: 4.0
+  dropout: 0.0
+
+flow_matching:
+  path: cosine
+  t_min: 0.0
+  t_max: 1.0
+  time_scale: 999.0
+
+diffusion:
+  num_timesteps: 1000
+  schedule: cosine
+  prediction_type: eps
+
+train:
+  objective: flow_matching
+  precision: bf16
+  batch_size: 1
+  grad_accum_steps: 1
+  lr: 0.0001
+  weight_decay: 0.00
+  max_steps: 20000
+  log_every_steps: 100
+  save_every_steps: 2000
+  cfg_dropout_prob: 0.0
+
+  sample_every_steps: 500
+  sample_num_images: 4
+  sample_num_steps: 50
+  sample_solver: euler
+  # * Overfit sanity-check: disable CFG unless you also train the unconditional branch (cfg_dropout_prob > 0).
+  sample_cfg_scale: 1.0
+  sample_seed: 123
+  sample_save_denoise_debug: true
+  sample_denoise_t: 0.5
+
+ema:
+  enabled: true
+  decay: 0.9999
+  update_every: 1
+  start_step: 0
+  use_for_sampling: false
+
+tread:
+  enabled: true
+  # * Fraction of spatial tokens routed through the selected sublayers per block.
+  # * 0.5 is the common starting point used by HDM.
+  selection_rate: 0.5
+  # * Which sublayers to apply routing to. "cross" and "mlp" give most of the speedup.
+  apply_to: [cross, mlp]
+  # * "rotate" cycles through a random permutation across depth; "random" uses the same subset each block.
+  mode: rotate
+  # * Keep training/inference numerics stable; scaling can be tuned later.
+  rescale: false
+
+lora:
+  enabled: false
+  rank: 16
+  alpha: 16
+  dropout: 0.0
+  train_lora_only: true
+  target_modules: [q, k, v, proj]
+
+

@@ -1,0 +1,105 @@
+experiment_name: t2i_vtp_fm_256_anime_buckets_big
+output_dir: runs
+seed: 42
+
+video:
+  width: 256
+  height: 256
+  fps: 16
+  num_frames: 1
+  frame_stride: 1
+
+bucketing:
+  enabled: true
+  strategy: closest_ar
+  buckets:
+    - [256, 256]
+
+tokenizer:
+  type: vtp
+  name_or_path: ./VTP-Small-f16d64
+  repo_path: ./VTP
+  latent_f: 16
+  latent_d: 64
+  latent_scale: 6.287
+
+text_encoder:
+  type: hf
+  name_or_path: ./t5gemma-2-270m-270m
+  max_length: 128
+  freeze: true
+  use_processor: true
+  trust_remote_code: false
+
+model:
+  # * Larger denoiser capacity.
+  # * NOTE: You wrote "dim=768 depth=1"; depth=1 is *smaller* than your current depth=8.
+  # * This config uses depth=12 as the typical "bigger model" direction.
+  dim: 768
+  depth: 12
+  num_heads: 12
+  window_size: 8
+  mlp_ratio: 4.0
+  dropout: 0.0
+
+flow_matching:
+  path: cosine
+  t_min: 0.0
+  t_max: 1.0
+  time_scale: 999.0
+
+diffusion:
+  num_timesteps: 1000
+  schedule: cosine
+  prediction_type: eps
+
+train:
+  objective: flow_matching
+  precision: bf16
+  # * You may need to reduce batch_size for this larger model depending on GPU memory.
+  batch_size: 256
+  grad_accum_steps: 1
+  lr: 0.0001
+  weight_decay: 0.001
+  max_steps: 200000
+  log_every_steps: 100
+  save_every_steps: 5000
+  cfg_dropout_prob: 0.05
+
+  sample_every_steps: 500
+  sample_num_images: 4
+  sample_num_steps: 50
+  sample_solver: euler
+  sample_cfg_scale: 5.0
+  sample_seed: 123
+  sample_save_denoise_debug: true
+  sample_denoise_t: 0.1
+
+ema:
+  enabled: true
+  decay: 0.9999
+  update_every: 1
+  start_step: 0
+  use_for_sampling: false
+
+
+tread:
+  enabled: false
+  # * Fraction of spatial tokens routed through the selected sublayers per block.
+  # * 0.5 is the common starting point used by HDM.
+  selection_rate: 0.5
+  # * Which sublayers to apply routing to. "cross" and "mlp" give most of the speedup.
+  apply_to: [cross, mlp]
+  # * "rotate" cycles through a random permutation across depth; "random" uses the same subset each block.
+  mode: rotate
+  # * Keep training/inference numerics stable; scaling can be tuned later.
+  rescale: false
+
+lora:
+  enabled: false
+  rank: 16
+  alpha: 16
+  dropout: 0.0
+  train_lora_only: true
+  target_modules: [q, k, v, proj]
+

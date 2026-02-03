@@ -1,0 +1,32 @@
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# * Outputs
+runs/
+
+# * Local caches
+cache/
+
+# * Datasets + metadata
+data/
+danbooru_surtr_solo_100k/
+metadata.parquet
+
+# * Pretrained models / checkpoints
+t5gemma-2-270m-270m/
+t5gemma-2-4b-4b/
+VTP-Large-f16d64/
+VTP-Small-f16d64/
+*.pt
+*.safetensors
+*.ckpt
+
+# * Vendored third-party repos / archives
+VTP/
+HDM/
+transformers/
+transformers.zip
+
+

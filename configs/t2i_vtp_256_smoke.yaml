@@ -1,0 +1,70 @@
+experiment_name: t2i_vtp_smoke_256
+output_dir: runs
+seed: 42
+
+# * T2I is treated as "video with 1 frame" so we can reuse the same training loop/model.
+video:
+  width: 256
+  height: 256
+  fps: 16
+  num_frames: 1
+  frame_stride: 1
+
+tokenizer:
+  type: vtp
+  # * Point to your local VTP checkpoint directory (downloaded from HF).
+  name_or_path: ./VTP-Small-f16d64
+  # * Optional: point to the VTP repo root if it isn't on PYTHONPATH.
+  repo_path: ./VTP
+  latent_f: 16
+  latent_d: 64
+
+text_encoder:
+  # * Smoke-run encoder (no external downloads). Switch to type=hf later.
+  type: hash
+  dim: 512
+  max_length: 128
+
+model:
+  dim: 512
+  depth: 8
+  num_heads: 8
+  window_size: 8
+  mlp_ratio: 4.0
+  dropout: 0.0
+
+diffusion:
+  num_timesteps: 1000
+  schedule: cosine
+  prediction_type: eps
+
+train:
+  precision: bf16
+  batch_size: 32
+  grad_accum_steps: 1
+  lr: 0.0001
+  weight_decay: 0.0
+  max_steps: 20000
+  log_every_steps: 100
+  save_every_steps: 500
+  cfg_dropout_prob: 0.1
+  # * Sampling during training (rank0 only): saves PNG to runs/<exp>/samples/.
+  sample_every_steps: 200
+  sample_num_images: 4
+  sample_num_steps: 50
+  sample_eta: 0.0
+  sample_cfg_scale: 1.0
+  sample_seed: 123
+  # sample_prompts: ["a cute cat", "a dog in the park"]
+  sample_save_denoise_debug: true
+  sample_denoise_t: 900
+
+lora:
+  enabled: false
+  rank: 16
+  alpha: 16
+  dropout: 0.0
+  train_lora_only: true
+  target_modules: [q, k, v, proj]
+
+
