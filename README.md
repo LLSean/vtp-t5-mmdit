@@ -8,6 +8,12 @@ This repo is a **minimal, scalable** text-to-video diffusion training scaffold b
 
 > ! Important: This scaffold is designed for **correctness-first** iteration. Start at 256-ish resolution and short frame counts, then scale.
 
+## Example Result
+
+This is the output after training with 10k images for 100k steps.
+
+![Example result (10k images, 100k steps)](assets/example.jpeg)
+
 ---
 
 ## 0) Project flow (high-level)
